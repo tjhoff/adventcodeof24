@@ -28,48 +28,50 @@ fn distance(a: (isize, isize), b: (isize, isize)) -> isize {
 }
 
 fn is_in_line(point: (isize, isize), (a, b): ((isize, isize), (isize, isize))) -> bool {
-    // return (a.0 - point.0) * (point.1 - b.1) == (point.0 - b.0) * (a.1 - point.1);
+    return (a.0 - point.0) * (point.1 - b.1) == (point.0 - b.0) * (a.1 - point.1);
 }
 
 fn has_antinode(point: (isize, isize), group: &Vec<Antenna>) -> bool {
-    let antenna_pairs: Vec<(&Antenna, &Antenna)> = group.into_iter().tuple_windows().collect();
+    let antenna_pairs: Vec<(&Antenna, &Antenna)> = group
+        .into_iter()
+        .tuple_combinations()
+        .collect();
 
     return antenna_pairs
         .into_iter()
-        .filter(|(a, b)| is_in_line(point, (a.pos, b.pos)))
-        .any(|(a, b)| {
-            let a_dist = distance(point, a.pos);
-            let b_dist = distance(point, b.pos);
-            return a_dist == b_dist * 2 || b_dist == a_dist * 2;
-        });
+        .any(|(a, b)| is_in_line(point, (a.pos, b.pos)))
+        // .any(|(a, b)| {
+        //     let a_dist = distance(point, a.pos);
+        //     let b_dist = distance(point, b.pos);
+        //     return a_dist == b_dist * 2 || b_dist == a_dist * 2;
+        // });
 }
 
-fn print_all_found((width, height): (usize, usize), group: &Vec<Antenna>) {
-    // print!("{esc}c", esc = 27 as char);
-    let antenna_pairs: Vec<(&Antenna, &Antenna)> = group.into_iter().tuple_windows().collect();
-    let antenna_locations: HashSet<(isize, isize)> = group.into_iter().map(|a|a.pos).collect();
-    for row in 0..height {
-        for col in 0..width {
-            if antenna_locations.contains(&(col as isize, row as isize)) {
-                print!("0");
-            }
-            else if antenna_pairs
-                .clone()
-                .into_iter()
-                .any(|(a, b)| is_in_line((col as isize, row as isize), (a.pos, b.pos)))
-            {
-                print!("{}", "#");
-            } else {
-                print!("{}", ".");
-            }
-        }
+// fn print_all_found((width, height): (usize, usize), group: &Vec<Antenna>) {
+//     // print!("{esc}c", esc = 27 as char);
+//     let antenna_pairs: Vec<(&Antenna, &Antenna)> = group.into_iter().combinations(2).collect();
+//     let antenna_locations: HashSet<(isize, isize)> = group.into_iter().map(|a| a.pos).collect();
+//     for row in 0..height {
+//         for col in 0..width {
+//             if antenna_locations.contains(&(col as isize, row as isize)) {
+//                 print!("0");
+//             } else if antenna_pairs
+//                 .clone()
+//                 .into_iter()
+//                 .any(|(a, b)| is_in_line((col as isize, row as isize), (a.pos, b.pos)))
+//             {
+//                 print!("{}", "*");
+//             } else {
+//                 print!("{}", ".");
+//             }
+//         }
 
-        print!("\n");
-    }
-}
+//         print!("\n");
+//     }
+// }
 
 fn main() {
-    let filename = "test.txt";
+    let filename = "data.txt";
     let file_text = read_to_string(filename).unwrap();
     let lines: Vec<&str> = file_text.lines().collect();
     let height = lines.len();
@@ -100,13 +102,13 @@ fn main() {
         .map(|(point, (c, _g))| (c, point))
         .collect();
 
-    println!();
-    for (c, grp) in groups {
-        println!("{c}");
-        print_all_found((width, height), &grp);
+    // println!();
+    // for (c, grp) in groups {
+    //     println!("{c}");
+    //     print_all_found((width, height), &grp);
 
-        println!();
-    }
-
-    // println!("{:?}", antinodes.)
+    //     println!();
+    // }
+    let unique_antinodes : HashSet<(usize, usize)> = antinodes.into_iter().map(|(c, loc)| loc).collect();
+    println!("{:?}", unique_antinodes.len());
 }
