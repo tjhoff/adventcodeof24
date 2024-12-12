@@ -1,6 +1,5 @@
 use std::{collections::HashMap, fs::read_to_string};
 
-use itertools::Itertools;
 
 fn parse_line(line: &str) -> Vec<Option<u32>> {
     return line.chars().map(|char| char.to_digit(10)).collect();
@@ -9,26 +8,32 @@ fn parse_line(line: &str) -> Vec<Option<u32>> {
 type Coordinate = (usize, usize);
 type Lookup = HashMap<Coordinate, Vec<Coordinate>>;
 type HeightMap = Vec<Vec<Option<u32>>>;
-fn travel_path(coordinate: (usize, usize), cells: HeightMap, paths: Lookup, depth: usize) -> usize {
+fn travel_path(
+    coordinate: (usize, usize),
+    cells: HeightMap,
+    paths: Lookup,
+    depth: usize,
+) -> Vec<Coordinate> {
     let cell_height = cells[coordinate.1][coordinate.0];
     let spaces = " ".repeat(depth);
 
-    println!("{spaces}{coordinate:?} {cell_height:?}");
+    // println!("{spaces}{coordinate:?} {cell_height:?}");
     if cell_height == Some(9) {
-        return 1;
+        return vec![coordinate.clone()];
     }
 
     let Some(paths_at_node) = paths.get(&coordinate) else {
-        return 0;
+        return Vec::new();
     };
     return paths_at_node
         .into_iter()
         .map(|new_coord| travel_path(new_coord.clone(), cells.clone(), paths.clone(), depth + 1))
-        .sum();
+        .flatten()
+        .collect();
 }
 
 fn main() {
-    let filename = "test1.txt";
+    let filename = "test3.txt";
     let file_text = read_to_string(filename).unwrap();
     let lines = file_text.lines();
 
@@ -52,9 +57,12 @@ fn main() {
 
             let ix: isize = x as isize;
             let iy: isize = y as isize;
-            let neighbors: Vec<Coordinate> = [-1, 0, 1]
+            // For any diagonal neighbors, as was my first understanding of the problem!
+            // let neighbors: Vec<Coordinate> = [-1, 0, 1]
+            //     .into_iter()
+            //     .cartesian_product([-1, 0, 1])
+            let neighbors: Vec<Coordinate> = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 .into_iter()
-                .cartesian_product([-1, 0, 1])
                 .filter_map(|(nx, ny)| {
                     let target_x = ix + nx;
                     let target_y = iy + ny;
@@ -64,7 +72,7 @@ fn main() {
                     let Some(height) = data[target_y as usize][target_x as usize] else {
                         return None;
                     };
-                    println!("{x}, {y}: {height:?} > {cell_height:?}");
+                    // println!("{x}, {y}: {height:?} > {cell_height:?}");
                     if height == (cell_height + 1) {
                         return Some((target_x as usize, target_y as usize));
                     }
@@ -75,13 +83,16 @@ fn main() {
             paths.insert((x, y), neighbors);
         }
     }
-    println!("{data:?}");
-    println!("{paths:?}");
+    // println!("{data:?}");
+    // println!("{paths:?}");
 
     let score: usize = starts
         .into_iter()
-        .map(|start| travel_path(start, data.clone(), paths.clone(), 0))
+        .map(|start| {
+            travel_path(start, data.clone(), paths.clone(), 0)
+                .into_iter()
+                .count()
+        })
         .sum();
-
     println!("{score}");
 }
