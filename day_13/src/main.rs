@@ -21,6 +21,19 @@ fn parse_coordinates(prize: &str) -> (isize, isize) {
     return coords[0];
 }
 
+fn mult((x, y): (isize, isize), count: isize) -> (isize, isize) {
+    return (x * count, y * count);
+}
+
+fn is_solution((ax, ay): (isize, isize), (bx, by): (isize, isize), prize: (isize, isize)) -> bool {
+    return (ax + bx, ay + by) == prize;
+}
+
+fn is_integerish(f: f64) -> bool {
+    let fract_part = f.fract();
+    return fract_part < 0.01 || fract_part > 0.99;
+}
+
 fn solve_with_math(
     (apx, apy): (isize, isize),
     (bpx, bpy): (isize, isize),
@@ -37,11 +50,12 @@ fn solve_with_math(
     let b = apy - h;
     let a_presses = v / b;
     let b_presses = (cx / bpx) - ((a_presses * apx) / bpx);
-    if (a_presses.fract() > 0.01 || b_presses.fract() > 0.01) {
+    if !(is_integerish(a_presses) && is_integerish(b_presses) && a_presses > 0.0 && b_presses > 0.0)
+    {
         return None;
     }
     // println!("a: {apx},{apy} c: {cx},{cy} {g} {h} {v}/{b} -> {a_presses} {b_presses}");
-    return Some((a_presses as isize, b_presses as isize));
+    return Some((a_presses.round() as isize, b_presses.round() as isize));
 }
 
 fn solve(lines: Vec<&str>) -> isize {
@@ -51,29 +65,33 @@ fn solve(lines: Vec<&str>) -> isize {
     let button_b = parse_coordinates(slice[1]);
     let (px, py) = parse_coordinates(slice[2]);
     let prize = (px + offset, py + offset);
-    let Some((a_presses, b_presses)) = solve_with_math(button_a, button_b, prize) else {
-        return 0;
-    };
-    let mut math_result = 0;
+    let math_result = solve_with_math(button_a, button_b, prize);
+    let (a_presses, b_presses) = math_result.unwrap_or((0, 0));
+    let mut math_cost = 0;
     if (
         a_presses * button_a.0 + b_presses * button_b.0,
         a_presses * button_a.1 + b_presses * button_b.1,
     ) == prize
     {
-        println!("{a_presses} {b_presses}");
-        math_result = a_presses * 3 + b_presses;
-    } else {
-        println!("Invalid result??");
+        math_cost = a_presses * 3 + b_presses;
     }
-    return math_result;
-    //     let a_pushes: std::ops::Range<usize> = 0..100;
-    //     let b_pushes: std::ops::Range<usize> = 0..100;
-    //     return a_pushes
-    //         .cartesian_product(b_pushes)
-    //         .filter(|(a, b)| is_solution(mult(button_a, *a), mult(button_b, *b), prize))
-    //         .map(|(a, b)| a * 3 + b)
-    //         .inspect()
-    //         .sum();
+    // let a_pushes: std::ops::Range<isize> = 0..100;
+    // let b_pushes: std::ops::Range<isize> = 0..100;
+    // let results: Vec<(isize, isize)> = a_pushes
+    //     .cartesian_product(b_pushes)
+    //     .filter(|(a, b)| is_solution(mult(button_a, *a), mult(button_b, *b), prize))
+    //     .collect();
+
+    // let first_result = results.get(0);
+    // if first_result != math_result.as_ref() {
+    //     println!(
+    //         "Mismatched results! {first_result:?} {:?}",
+    //         (a_presses, b_presses)
+    //     );
+    // }
+    // let bad_solution_result = first_result.unwrap_or(&(0, 0));
+    // return bad_solution_result.0 * 3 + bad_solution_result.1;
+    return math_cost;
 }
 
 fn main() {
